@@ -20,8 +20,8 @@ char len;
 unsigned long lastTime = 0;
 // Timer set to 10 minutes (600000)
 //unsigned long timerDelay = 600000;
-// Set timer to 5 seconds (5000)
-unsigned long timerDelay = 5000;
+// Set timer to 10 seconds (10000)
+unsigned long timerDelay = 10000;
 
 void setup() {
   //FastLED.addLeds<WS2812B, DATA_PIN>(leds, NUM_LEDS);
@@ -31,16 +31,19 @@ void setup() {
 
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
-  
   while(WiFi.status() != WL_CONNECTED) {
-    leds[0] = CRGB::Black;
-    FastLED.show();  
-    delay(500);
+    
     Serial.print(".");
-    leds[0] = CRGB::Yellow; //tried to blink yellow while wifi connects but doesn't work right.  light does blink though
-    FastLED.show();
+    for (int i = 0; i <= NUM_LEDS; i++){
+      leds[i] = CRGB::Black;
+      FastLED.show();  
+      delay(300);
+      leds[i] = CRGB::White;
+      FastLED.show();  
+
+    }
+
   }
-  
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
@@ -59,6 +62,7 @@ void loop() {
 
       String serverPath = "plex sessions call url"; //here you will paste the session call that checks if users are watching, we will grab this from the plex dashboard page
       
+      // Your Domain name with URL path or IP address with path
       http.begin(client, serverPath.c_str());
       
       // Send HTTP GET request
@@ -68,40 +72,41 @@ void loop() {
  
          String payload = http.getString();
          Serial.println(payload.length());
-         
-         if (payload.length() > 100){ //to lazy to parse xml so i check if its a string longer than 100 characters to display the green in use light
-          leds[0] = CRGB::Black;
-          FastLED.show();
-          leds[0] = CRGB::Green;
-          FastLED.show();   
+
+         if (payload.length() > 100 || payload.length() == 0){
+          
+          for (int i = 0; i <= NUM_LEDS; i++){
+            leds[i] = CRGB::Green;
+            FastLED.show();  
+          }
+          
          }
-         else if(payload.length() < 100){ //if less than 100 characters display blue light
-          leds[0] = CRGB::Black;
-          FastLED.show();
-          leds[0] = CRGB::Blue;
-          FastLED.show();        
+         else if(payload.length() < 100){
+          for (int i = 0; i <= NUM_LEDS; i++){
+            leds[i] = CRGB::Blue;
+            FastLED.show();  
+          }       
          }
      
        }
        else {
-         Serial.println("ERROR"); //if there is an error or plex is down red will be displayed
-         leds[0] = CRGB::Black;
-         FastLED.show();
-         leds[0] = CRGB::Red;
-         FastLED.show();
+         Serial.println("ERROR");
+         for (int i = 0; i <= NUM_LEDS; i++){
+           leds[i] = CRGB::Red;
+           FastLED.show();  
+         }
        }
       
-       
       // Free resources
       http.end();
     }
     else {
-      Serial.println("WiFi Disconnected"); //if wifi is disconnected red will also be displayed
-      leds[0] = CRGB::Black;
-      FastLED.show();
-      leds[0] = CRGB::Red;
-      FastLED.show();
-    }
+      Serial.println("WiFi Disconnected");
+      for (int i = 0; i <= NUM_LEDS; i++){
+        leds[i] = CRGB::Red;
+        FastLED.show();  
+      }
     lastTime = millis();
+    }
   }
 }
